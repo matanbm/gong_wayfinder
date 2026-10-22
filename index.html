@@ -570,15 +570,23 @@ function chooseCrew(F) {
     const seats = F.tableSeats.filter(s => s.table === tb.table);
     const picked = Array.isArray(tb.seats) ? tb.seats : seats.map((_, i) => i).filter(() => rand() < (tb.seats ?? 0.6));
     const kind = tb.activity === 'eat' ? 'eat' : 'meeting';
+    // A table can have a script: [[seat index | 'all', line], ...]; 'all' lines make everyone cheer.
+    const group = tb.talk && { members: [], offset: 0 };
     for (const i of picked) {
       const s = seats[i];
       if (!s) continue;
-      F.crew.push({ kind, ...s, seatH: 0.5, presenter: i === tb.presenter });
+      const c = { kind, ...s, seatH: 0.5, presenter: i === tb.presenter, group };
+      F.crew.push(c);
+      group?.members.push(c);
       if (kind === 'eat') {
         const px = s.x + Math.sin(s.yaw) * 0.6, pz = s.z + Math.cos(s.yaw) * 0.6;
         cyl('counter', 0.13, 0.11, 0.015, px, 0.775, pz, 20);
         cyl('food', 0.07, 0.08, 0.04, px, 0.8, pz, 10);
       }
+    }
+    if (group) {
+      group.talk = tb.talk.map(([who, line]) => [who === 'all' ? 'all' : picked.indexOf(who), line]);
+      F.groups.push(group);
     }
   }
   for (const g of spec.groups || []) {
@@ -1008,10 +1016,15 @@ function animateFloor(F, t, dt) {
   for (const g of F.groups) {
     if (!g.talk.length) continue;
     const [i, line] = g.talk[Math.floor(t / 2.8 + g.offset) % g.talk.length];
-    speakers.add(g.members[i]);
-    lines.set(g.members[i], line);
-    g.speaker = g.members[i];
+    g.cheering = i === 'all';
+    g.speaker = g.cheering ? null : g.members[i];
+    for (const m of g.cheering ? g.members : [g.speaker]) { speakers.add(m); lines.set(m, line); }
   }
+  const say = c => {
+    const line = lines.get(c);
+    if (line && c.bubble.textContent !== line) c.bubble.textContent = line;
+    c.bubble.classList.toggle('show', !!line);
+  };
   for (const c of F.crew) {
     const p = c.p, s = c.seed;
     if (c.kind === 'desk') {
@@ -1023,15 +1036,20 @@ function animateFloor(F, t, dt) {
       p.head.rotation.y = Math.sin(t * 0.23 + s * 11) * (typing ? 0.15 : 0.6);
       p.head.rotation.x = typing ? 0.12 : 0;
     } else if (c.kind === 'meeting') {
-      p.shL.rotation.x = p.shR.rotation.x = -0.45;
-      p.elL.rotation.x = p.elR.rotation.x = -1.05;
-      if (c.presenter) {
+      // While cheering everyone claps (hands meet in front) and the presenter raises both arms in a V.
+      const cheer = c.group?.cheering, clap = Math.abs(Math.sin(t * 16 + s)) * 0.25;
+      p.shL.rotation.x = p.shR.rotation.x = !cheer ? -0.45 : c.presenter ? -2.8 : -1.15;
+      p.elL.rotation.x = p.elR.rotation.x = !cheer ? -1.05 : c.presenter ? -0.2 : -0.9;
+      p.shL.rotation.z = !cheer ? 0 : c.presenter ? 0.35 : -0.3 - clap;
+      p.shR.rotation.z = -p.shL.rotation.z;
+      if (c.presenter && !cheer) {
         p.shR.rotation.x = -0.9 + Math.sin(t * 3 + s) * 0.25;
         p.elR.rotation.x = -0.9 + Math.sin(t * 4.3) * 0.3;
         p.head.rotation.y = Math.sin(t * 0.6) * 0.7;
-      } else {
+      } else if (!c.presenter) {
         lookToward(p, c.focus.x, c.focus.z, dt);
       }
+      if (c.bubble) say(c);
     } else if (c.kind === 'eat') {
       const ph = (t * 0.33 + s) % 1, bite = ph < 0.16 ? Math.sin(ph / 0.16 * Math.PI) : 0;
       p.shL.rotation.x = -0.45;
@@ -1065,9 +1083,7 @@ function animateFloor(F, t, dt) {
       lookToward(p, focus.x, focus.z, dt, c.kind === 'machine' ? 1.5 : 1.2);
       p.head.rotation.x = -sip * 0.3;
       if (!c.seatH) p.body.position.y = Math.sin(t * 1.6 + s) * 0.01;
-      const line = lines.get(c);
-      if (line && c.bubble.textContent !== line) c.bubble.textContent = line;
-      c.bubble.classList.toggle('show', !!line);
+      say(c);
     }
   }
   for (const st of F.steam) {

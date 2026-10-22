@@ -154,7 +154,16 @@ registerFloor({
       f.cafeTable(1876, 1300);
     },
     crew: {
-      tables: [{ table: 2, seats: [1, 3, 5, 8, 10, 12, 15], presenter: 15 }],   // a meeting in Sia
+      // Board meeting in Sia: dreaming about the bell-ringing day (fictional), then applause.
+      tables: [{
+        table: 2, seats: [1, 3, 5, 8, 10, 12, 15], presenter: 15,
+        talk: [
+          [15, 'Team, close your eyes…'], [15, 'Imagine the bell-ringing day… 🔔🚀'],
+          ['all', '👏'], ['all', '👏'],
+          [3, 'Dream big! 🎉'], [10, "Let's keep building 💪"], [15, 'This is all of you 💜'],
+          ['all', '👏'],
+        ],
+      }],
       groups: [{
         people: [
           { x: 1699, y: 1158, face: [0, 1], pose: 'stand', cup: true },
