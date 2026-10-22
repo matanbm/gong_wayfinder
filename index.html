@@ -1,0 +1,1494 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gong Icon · Wayfinder</title>
+<style>
+  :root { --purple: #5b2bd6; --pink: #ff2d75; --team: #a21cf0; --ink: #1f1b2e; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden; color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(#b9defc 0%, #e6f2ff 55%, #f5eee6 100%);
+  }
+  #scene { position: fixed; inset: 0; }
+  #panel {
+    position: fixed; top: 16px; left: 16px; width: 290px; z-index: 10; padding: 16px;
+    background: #fff; border-radius: 16px; box-shadow: 0 12px 32px rgba(40, 20, 90, .18);
+  }
+  #panel h1 { font-size: 16px; margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
+  .logo {
+    width: 26px; height: 26px; border-radius: 8px; background: var(--purple); color: #fff;
+    display: grid; place-items: center; font-weight: 800;
+  }
+  .badge { background: #efe9ff; color: var(--purple); border-radius: 6px; padding: 2px 7px; font-size: 12px; }
+  label.f { display: block; font-size: 12px; font-weight: 700; color: #6b6880; margin: 12px 0 5px; }
+  .combo { position: relative; }
+  .combo input {
+    width: 100%; box-sizing: border-box; border: 2px solid #e3def3; border-radius: 10px;
+    padding: 9px 30px 9px 11px; font-size: 14px; outline: none; font-family: inherit;
+  }
+  .combo input:focus { border-color: var(--purple); }
+  .combo .chev { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #8a86a0; }
+  .combo ul {
+    display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+    max-height: 320px; overflow: auto; margin: 0; padding: 4px; list-style: none;
+    background: #fff; border-radius: 10px; box-shadow: 0 12px 28px rgba(40, 20, 90, .22);
+  }
+  .combo.open ul { display: block; }
+  .combo li { padding: 7px 9px; border-radius: 7px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .combo li.grp { font-size: 11px; font-weight: 700; color: #9a96ad; text-transform: uppercase; cursor: default; padding: 8px 9px 4px; }
+  .combo li.active { background: #efe9ff; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .ftag { margin-left: auto; font-size: 11px; font-weight: 700; color: #8a86a0; background: #f1eef9; border-radius: 5px; padding: 1px 6px; }
+  #info { margin-top: 14px; font-size: 13px; line-height: 1.5; color: #4a4660; min-height: 20px; }
+  #replay {
+    margin-top: 12px; width: 100%; border: 0; border-radius: 10px; padding: 10px; cursor: pointer;
+    background: var(--purple); color: #fff; font-weight: 700; font-size: 14px; font-family: inherit;
+  }
+  #replay:disabled { opacity: .35; cursor: default; }
+  #floors {
+    position: fixed; right: 16px; top: 50%; transform: translateY(-50%); z-index: 10; padding: 8px;
+    display: flex; flex-direction: column; gap: 6px; background: #fff; border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(40, 20, 90, .18);
+  }
+  #floors .t { font-size: 10px; font-weight: 700; color: #9a96ad; text-align: center; text-transform: uppercase; }
+  #floors button {
+    position: relative; width: 46px; height: 38px; border: 0; border-radius: 10px; cursor: pointer;
+    background: #f3f0fb; color: #4a4660; font-family: inherit; font-weight: 700; font-size: 15px;
+  }
+  #floors button.on { background: var(--purple); color: #fff; }
+  #floors button.dest::after {
+    content: ''; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--pink);
+  }
+  #hint {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #5d5a70;
+    background: rgba(255, 255, 255, .75); padding: 6px 14px; border-radius: 20px;
+  }
+  #toast {
+    position: fixed; top: 22px; left: 50%; transform: translate(-50%, -20px); opacity: 0; transition: .35s;
+    background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 12px; font-weight: 600; font-size: 14px;
+    pointer-events: none; z-index: 30;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  #ride {
+    position: fixed; inset: 0; z-index: 25; display: grid; place-content: center; gap: 10px; text-align: center;
+    background: radial-gradient(#5b2bd6ee, #2a146ef2); color: #fff; font-size: 22px; font-weight: 700;
+    opacity: 0; pointer-events: none; transition: opacity .45s;
+  }
+  #ride.show { opacity: 1; }
+  #ride .big { font-size: 64px; }
+  .lbl {
+    display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; color: #fff;
+    white-space: nowrap; box-shadow: 0 2px 6px rgba(0, 0, 0, .2); transition: transform .25s, box-shadow .25s;
+  }
+  .lbl.meeting { background: var(--pink); }
+  .lbl.team { background: var(--team); font-size: 11px; }
+  .lbl.other { background: #fff; color: #222; border: 1px solid #ccc; }
+  .lbl.service { background: rgba(255, 255, 255, .88); color: #5a5670; font-weight: 600; font-size: 11px; }
+  .lbl.you { background: var(--purple); font-size: 11px; }
+  .lbl.hl { transform: scale(1.45); box-shadow: 0 0 0 3px #fff, 0 6px 18px rgba(255, 45, 117, .7); }
+  .bubble {
+    display: inline-block; position: relative; margin-bottom: 10px; padding: 4px 9px; border-radius: 10px;
+    background: #fff; color: #2a2638; font-size: 12px; font-weight: 600; white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .2); opacity: 0; transform: translateY(6px) scale(.85);
+    transition: opacity .25s, transform .25s;
+  }
+  .bubble.show { opacity: 1; transform: none; }
+  .bubble::after {
+    content: ''; position: absolute; left: 50%; bottom: -6px; margin-left: -6px;
+    border: 6px solid transparent; border-bottom: 0; border-top-color: #fff;
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<!-- One file per floor; a missing file just means that floor isn't shown. -->
+<script src="floors/common.js"></script>
+<script src="floors/f18.js"></script>
+<script src="floors/f20.js"></script>
+<script src="floors/f21.js"></script>
+<script src="floors/f22.js"></script>
+<script src="floors/f23.js"></script>
+</head>
+<body>
+<div id="scene"></div>
+<div id="panel">
+  <h1><span class="logo">G</span> Gong Icon <span class="badge">Wayfinder</span></h1>
+  <label class="f" for="from-in">I sit in</label>
+  <div class="combo" id="from">
+    <input id="from-in" autocomplete="off" spellcheck="false" placeholder="Pick your room…">
+    <span class="chev">▾</span><ul></ul>
+  </div>
+  <label class="f" for="to-in">Take me to</label>
+  <div class="combo" id="to">
+    <input id="to-in" autocomplete="off" spellcheck="false" placeholder="Search a room, e.g. Rita">
+    <span class="chev">▾</span><ul></ul>
+  </div>
+  <div id="info"></div>
+  <button id="replay" disabled>↻ Replay walk</button>
+</div>
+<div id="floors"><div class="t">Floor</div></div>
+<div id="ride"><div class="big">🛗</div><div id="ride-text"></div></div>
+<div id="toast"></div>
+<div id="hint">Drag to rotate · Right-drag to pan · Scroll to zoom</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+/* ==========================================================================
+   1. RENDERER, CAMERA, LIGHTS, MATERIALS
+   ========================================================================== */
+const host = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+host.appendChild(renderer.domElement);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.domElement.style.cssText = 'position:fixed;inset:0;pointer-events:none';
+host.appendChild(labelRenderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 400);
+camera.position.set(-2, 44, 36);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(-2, 0, 1.5);
+controls.enableDamping = true;
+controls.maxPolarAngle = 1.35;
+controls.minDistance = 6;
+controls.maxDistance = 110;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d0ea, 1.5));
+const sun = new THREE.DirectionalLight(0xfff3e0, 2.4);
+sun.position.set(-16, 34, 20);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 90 });
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.02;
+scene.add(sun);
+
+const GRADIENT = new THREE.DataTexture(new Uint8Array([120, 190, 255]), 3, 1, THREE.RedFormat);
+GRADIENT.minFilter = GRADIENT.magFilter = THREE.NearestFilter;
+GRADIENT.needsUpdate = true;
+const toon = (color, extra = {}) => new THREE.MeshToonMaterial({ color, gradientMap: GRADIENT, ...extra });
+
+const COLORS = {
+  corridor: 0xefeae2, slabSide: 0xb7b0a5, team: 0xd6ecd1, meeting: 0xeadfff, other: 0xfff1c9,
+  lounge: 0xf4e1c4, deck: 0xcaa57a, kitchen: 0xf1d9ae, wc: 0xd9e6ef, booth: 0xf2ebff, core: 0xcdcad4,
+  dining: 0xf6e6c6, cafe: 0xf7d6c1, void: 0xdcd9e2,
+};
+const MATS = {
+  wall: toon(0xfaf8f4), cap: toon(0x4b4f66), glass: new THREE.MeshBasicMaterial({ color: 0x9fd4ff, transparent: true, opacity: 0.22, depthWrite: false }),
+  glassCap: toon(0x5a6278), mullion: toon(0x6b7389), desk: toon(0xfdfcf9), deskLeg: toon(0x8b8fa3), screen: toon(0x2a2c38),
+  chair: toon(0x3d3a4f), chairMeet: toon(0x7b4fe0), metal: toon(0xb9c1cc), table: toon(0xf0dcb8), sofa: toon(0xff8fb1),
+  tub: toon(0xffc857), column: toon(0xe9e6e0), pot: toon(0xe0d6c6), leaf: toon(0x4fae5a),
+  counter: toon(0xffffff), counterTop: toon(0x34364a), fridge: toon(0xd5dde7), stool: toon(0xff7a59), planter: toon(0xb88a5a),
+  locker: toon(0xe7d3b2), printer: toon(0x50566b), stairs: toon(0xdedbd4), concrete: toon(0xc4c1cb), red: toon(0xe53935),
+  coffee: toon(0x2b2b33), bean: toon(0x6f4e37), food: toon(0xf4a259), wood: toon(0xc8935e),
+};
+const OUTLINED = new Set(['wall', 'cap', 'glassCap', 'desk', 'screen', 'chair', 'chairMeet', 'table', 'sofa', 'tub', 'column',
+  'counter', 'counterTop', 'fridge', 'planter', 'locker', 'printer', 'stairs', 'concrete', 'metal', 'pot', 'coffee', 'wood']);
+const NO_SHADOW = new Set(['glass']);
+const lineMat = new THREE.LineBasicMaterial({ color: 0x302a45, transparent: true, opacity: 0.5 });
+const WALL_H = 2.1, FACADE_H = 2.8;
+const G = 0.15;   // path-finding grid cell (m)
+
+/* ==========================================================================
+   2. FLOOR BUILDER
+   Floor files (floors/fNN.js) give their layout in screenshot pixels; CUR.frame converts to meters.
+   ========================================================================== */
+let CUR = null;   // the floor being built; every builder below draws into it
+const mx = x => (x - CUR.frame.cx) / CUR.frame.ppm;
+const mz = y => (y - CUR.frame.cy) / CUR.frame.ppm;
+const toM = ([x, y]) => [mx(x), mz(y)];
+const B = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+const Cyl = (rt, rb, h, s = 16) => new THREE.CylinderGeometry(rt, rb, h, s);
+const put = (key, geo) => (CUR.batch[key] ||= []).push(geo);
+const obstacle = (x, z, hw, hd, ry = 0) => CUR.obst.push({ x, z, hw, hd, ry });
+function box(key, w, h, d, x, y, z, ry = 0) { const g = B(w, h, d); if (ry) g.rotateY(ry); g.translate(x, y, z); put(key, g); }
+function cyl(key, rt, rb, h, x, y, z, s) { const g = Cyl(rt, rb, h, s); g.translate(x, y, z); put(key, g); }
+// Put a part given in an object's local frame (facing +z) into world space.
+function place(key, geo, lx, ly, lz, ry, wx, wz) { geo.translate(lx, ly, lz); if (ry) geo.rotateY(ry); geo.translate(wx, 0, wz); put(key, geo); }
+function leaves(r, x, y, z) { const g = new THREE.IcosahedronGeometry(r, 0); g.translate(x, y, z); put('leaf', g); }
+
+function flushBatches() {
+  for (const [key, geos] of Object.entries(CUR.batch)) {
+    const geo = mergeGeometries(geos);
+    const mesh = new THREE.Mesh(geo, MATS[key]);
+    mesh.castShadow = mesh.receiveShadow = !NO_SHADOW.has(key);
+    CUR.group.add(mesh);
+    if (OUTLINED.has(key)) CUR.group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), lineMat));
+  }
+  CUR.batch = {};
+}
+const shapeOf = poly => new THREE.Shape(poly.map(([x, y]) => new THREE.Vector2(mx(x), -mz(y))));
+function floorMesh(poly, color, y = 0.01) {
+  const geo = new THREE.ShapeGeometry(shapeOf(poly));
+  geo.rotateX(-Math.PI / 2);
+  const mesh = new THREE.Mesh(geo, toon(color));
+  mesh.position.y = y;
+  mesh.receiveShadow = true;
+  CUR.group.add(mesh);
+  return mesh;
+}
+function centroid(poly) {
+  let a = 0, x = 0, y = 0;
+  poly.forEach(([x0, y0], i) => {
+    const [x1, y1] = poly[(i + 1) % poly.length], f = x0 * y1 - x1 * y0;
+    a += f; x += (x0 + x1) * f; y += (y0 + y1) * f;
+  });
+  return [x / (3 * a), y / (3 * a)];
+}
+function makeLabel(text, cls, x, y, h = 2.5) {
+  const wrap = document.createElement('div');
+  const span = document.createElement('span');
+  span.className = 'lbl ' + cls;
+  span.textContent = text;
+  wrap.append(span);
+  const obj = new CSS2DObject(wrap);
+  obj.position.set(mx(x), h, mz(y));
+  CUR.group.add(obj);
+  return span;
+}
+
+// --- walls ---------------------------------------------------------------------
+function segmentsOf(polylines) {
+  const segs = [];
+  for (const pl of polylines) for (let i = 0; i < pl.length - 1; i++) segs.push([pl[i], pl[i + 1]]);
+  return segs;
+}
+// Split wall segments wherever a door sits on them (doors are [x, y, width m]).
+function cutDoors(segs, doors) {
+  const out = [], ppm = CUR.frame.ppm, tol = 0.17 * ppm;
+  for (const [a, b] of segs) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy);
+    const cuts = [];
+    for (const [x, y, w] of doors) {
+      const t = ((x - a[0]) * dx + (y - a[1]) * dy) / (L * L);
+      if (t < 0 || t > 1 || Math.hypot(a[0] + t * dx - x, a[1] + t * dy - y) > tol) continue;
+      const h = w * ppm / 2 / L;
+      cuts.push([t - h, t + h]);
+    }
+    cuts.sort((p, q) => p[0] - q[0]);
+    const at = t => [a[0] + t * dx, a[1] + t * dy];
+    let t0 = 0;
+    for (const [c0, c1] of cuts) {
+      if (c0 > t0) out.push([at(t0), at(c0)]);
+      CUR.jambs.push(at(c0), at(c1));
+      t0 = Math.max(t0, c1);
+    }
+    if (t0 < 1) out.push([at(t0), b]);
+  }
+  return out.filter(([a, b]) => Math.hypot(b[0] - a[0], b[1] - a[1]) > ppm * 0.03);
+}
+function buildWalls(segs, h, t, key, capKey, navR) {
+  for (const [a, b] of segs) {
+    const ax = mx(a[0]), az = mz(a[1]), bx = mx(b[0]), bz = mz(b[1]);
+    const L = Math.hypot(bx - ax, bz - az), ry = Math.atan2(-(bz - az), bx - ax);
+    const cx = (ax + bx) / 2, cz = (az + bz) / 2;
+    box(key, L + t, h, t, cx, h / 2, cz, ry);
+    box(capKey, L + t + 0.01, 0.05, t + 0.03, cx, h + 0.025, cz, ry);
+    CUR.navSegs.push([ax, az, bx, bz, navR]);
+  }
+}
+function mullions(polylines) {
+  for (const pl of polylines) {
+    let acc = 0;
+    for (let i = 1; i < pl.length; i++) {
+      const [ax, az] = toM(pl[i - 1]), [bx, bz] = toM(pl[i]), L = Math.hypot(bx - ax, bz - az);
+      for (let s = (1.6 - acc) % 1.6; s < L; s += 1.6) {
+        const t = s / L;
+        box('mullion', 0.07, FACADE_H, 0.1, ax + (bx - ax) * t, FACADE_H / 2, az + (bz - az) * t);
+      }
+      acc = (acc + L) % 1.6;
+    }
+  }
+}
+
+// --- furniture (positions in screenshot pixels unless the name ends with M) ------------
+function chairM(wx, wz, yaw, key = 'chair') {
+  place(key, B(0.46, 0.07, 0.44), 0, 0.46, 0, yaw, wx, wz);
+  place(key, B(0.44, 0.42, 0.06), 0, 0.74, -0.21, yaw, wx, wz);
+  place('metal', Cyl(0.03, 0.03, 0.38), 0, 0.24, 0, yaw, wx, wz);
+  place('metal', Cyl(0.24, 0.24, 0.04), 0, 0.03, 0, yaw, wx, wz);
+}
+// side: +1 chair on the desk's local +z side, -1 on -z, 0 no chair.
+function deskM(wx, wz, L, W, ry, side) {
+  place('desk', B(L - 0.03, 0.035, W - 0.03), 0, 0.74, 0, ry, wx, wz);
+  for (const s of [-1, 1]) place('deskLeg', B(0.05, 0.72, W - 0.12), s * (L / 2 - 0.08), 0.36, 0, ry, wx, wz);
+  obstacle(wx, wz, L / 2, W / 2, ry);
+  if (!side) return;
+  const sz = -side * (W / 2 - 0.14);
+  place('screen', B(0.58, 0.34, 0.03), 0, 1.0, sz, ry, wx, wz);
+  place('deskLeg', B(0.06, 0.16, 0.06), 0, 0.83, sz - side * 0.03, ry, wx, wz);
+  const lz = side * (W / 2 + 0.3);
+  const seat = { x: wx + Math.sin(ry) * lz, z: wz + Math.cos(ry) * lz, yaw: ry + (side > 0 ? Math.PI : 0) };
+  chairM(seat.x, seat.z, seat.yaw);
+  CUR.deskSeats.push(seat);
+}
+function deskToward(wx, wz, L, W, ry, n) {
+  deskM(wx, wz, L, W, ry, n ? Math.sign(n[0] * Math.sin(ry) + n[1] * Math.cos(ry)) || 1 : 0);
+}
+function deskCluster([x1, y1, x2, y2, nx, ny, sides]) {
+  const cw = (x2 - x1) / nx, ch = (y2 - y1) / ny, horiz = cw >= ch, ppm = CUR.frame.ppm;
+  for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {
+    let n = null;
+    if (sides.includes('l') && i === 0) n = [-1, 0];
+    else if (sides.includes('r') && i === nx - 1) n = [1, 0];
+    else if (sides.includes('t') && j === 0) n = [0, -1];
+    else if (sides.includes('b') && j === ny - 1) n = [0, 1];
+    deskToward(mx(x1 + cw * (i + 0.5)), mz(y1 + ch * (j + 0.5)),
+      (horiz ? cw : ch) / ppm, (horiz ? ch : cw) / ppm, horiz ? 0 : Math.PI / 2, n);
+  }
+}
+// Rectangular table with [top, bottom, left, right] chair counts; its chairs become seats people can use.
+function table([x1, y1, x2, y2], [nt, nb, nl, nr], key = 'table') {
+  const ax = mx(x1), bx = mx(x2), az = mz(y1), bz = mz(y2), w = bx - ax, d = bz - az, cx = (ax + bx) / 2, cz = (az + bz) / 2;
+  const index = CUR.tableCount++;
+  box(key, w, 0.05, d, cx, 0.74, cz);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) cyl('metal', 0.035, 0.035, 0.72, cx + sx * (w / 2 - 0.12), 0.36, cz + sz * (d / 2 - 0.12));
+  const row = (n, f) => { for (let i = 0; i < n; i++) f((i + 0.5) / n); };
+  const seat = (x, z, yaw) => { chairM(x, z, yaw, 'chairMeet'); CUR.tableSeats.push({ x, z, yaw, table: index }); };
+  row(nt, t => seat(ax + t * w, az - 0.36, 0));
+  row(nb, t => seat(ax + t * w, bz + 0.36, Math.PI));
+  row(nl, t => seat(ax - 0.36, az + t * d, Math.PI / 2));
+  row(nr, t => seat(bx + 0.36, az + t * d, -Math.PI / 2));
+  obstacle(cx, cz, w / 2, d / 2);
+}
+function armchair(px, py, fx, fy) {
+  const x = mx(px), z = mz(py), yaw = Math.atan2(fx, fy);
+  place('sofa', B(0.72, 0.4, 0.68), 0, 0.2, 0, yaw, x, z);
+  place('sofa', B(0.72, 0.45, 0.16), 0, 0.6, -0.26, yaw, x, z);
+  for (const s of [-1, 1]) place('sofa', B(0.14, 0.22, 0.6), s * 0.29, 0.5, 0.02, yaw, x, z);
+  obstacle(x, z, 0.36, 0.34, yaw);
+}
+function tubChair(px, py, fx, fy) {
+  const x = mx(px), z = mz(py), yaw = Math.atan2(fx, fy);
+  place('tub', Cyl(0.32, 0.28, 0.42, 20), 0, 0.21, 0, yaw, x, z);
+  place('tub', B(0.56, 0.32, 0.12), 0, 0.56, -0.24, yaw, x, z);
+  obstacle(x, z, 0.32, 0.32);
+}
+function sofaRun(x1, y1, x2, y2, [fx, fy]) {
+  const ax = mx(x1), bx = mx(x2), az = mz(y1), bz = mz(y2), t = 0.18;
+  box('sofa', bx - ax, 0.42, bz - az, (ax + bx) / 2, 0.21, (az + bz) / 2);
+  if (fx === 0) box('sofa', bx - ax, 0.4, t, (ax + bx) / 2, 0.62, fy > 0 ? az + t / 2 : bz - t / 2);
+  else box('sofa', t, 0.4, bz - az, fx > 0 ? ax + t / 2 : bx - t / 2, 0.62, (az + bz) / 2);
+  obstacle((ax + bx) / 2, (az + bz) / 2, (bx - ax) / 2, (bz - az) / 2);
+}
+function roundTable(px, py, r = 0.36, h = 0.74) {
+  const x = mx(px), z = mz(py);
+  cyl('table', r, r, 0.04, x, h, z, 20);
+  cyl('metal', 0.03, 0.03, h, x, h / 2, z);
+  cyl('metal', Math.min(0.2, r * 0.6), Math.min(0.2, r * 0.6), 0.03, x, 0.02, z);
+  obstacle(x, z, r, r);
+}
+// Round table with chairs evenly around it; the chairs become seats people can use.
+function cafeTable(px, py, chairs = 2, r = 0.36) {
+  roundTable(px, py, r);
+  const x = mx(px), z = mz(py), index = CUR.tableCount++;
+  for (let k = 0; k < chairs; k++) {
+    const a = 0.6 + k * Math.PI * 2 / chairs, cx = x + Math.sin(a) * (r + 0.32), cz = z + Math.cos(a) * (r + 0.32);
+    chairM(cx, cz, a + Math.PI, 'chairMeet');
+    CUR.tableSeats.push({ x: cx, z: cz, yaw: a + Math.PI, table: index });
+  }
+}
+function plant(px, py, s = 1) {
+  const x = mx(px), z = mz(py);
+  cyl('pot', 0.22 * s, 0.17 * s, 0.42 * s, x, 0.21 * s, z);
+  for (const [r, dx, dy, dz] of [[0.4, 0, 0.82, 0], [0.3, 0.16, 1.1, -0.08], [0.26, -0.18, 1.02, 0.1]]) leaves(r * s, x + dx * s, dy * s, z + dz * s);
+  obstacle(x, z, 0.3 * s, 0.3 * s);
+}
+function block(key, x1, y1, x2, y2, h, solid = true) {
+  const ax = mx(x1), bx = mx(x2), az = mz(y1), bz = mz(y2);
+  box(key, bx - ax, h, bz - az, (ax + bx) / 2, h / 2, (az + bz) / 2);
+  if (solid) obstacle((ax + bx) / 2, (az + bz) / 2, (bx - ax) / 2, (bz - az) / 2);
+}
+function counter(x1, y1, x2, y2) {
+  block('counter', x1, y1, x2, y2, 0.88);
+  const ax = mx(x1), bx = mx(x2), az = mz(y1), bz = mz(y2);
+  box('counterTop', bx - ax + 0.03, 0.04, bz - az + 0.03, (ax + bx) / 2, 0.9, (az + bz) / 2);
+}
+function planter(x1, y1, x2, y2) {
+  block('planter', x1, y1, x2, y2, 0.5);
+  const ax = mx(x1), bx = mx(x2), az = mz(y1), bz = mz(y2), long = Math.max(bx - ax, bz - az), n = Math.max(1, Math.round(long / 0.7));
+  for (let k = 0; k < n; k++) {
+    const t = (k + 0.5) / n;
+    leaves(0.32, bx - ax > bz - az ? ax + t * (bx - ax) : (ax + bx) / 2, 0.72, bx - ax > bz - az ? (az + bz) / 2 : az + t * (bz - az));
+  }
+}
+function stool(px, py) {
+  const x = mx(px), z = mz(py);
+  cyl('stool', 0.18, 0.18, 0.06, x, 0.74, z, 20);
+  cyl('metal', 0.03, 0.03, 0.72, x, 0.36, z);
+  cyl('metal', 0.17, 0.17, 0.03, x, 0.02, z);
+}
+function tv(px, py, fx, w) { box('screen', 0.05, 0.7, w, mx(px) + fx * 0.04, 1.35, mz(py)); }
+function sink(px, py) { box('metal', 0.55, 0.02, 0.42, mx(px), 0.93, mz(py)); }
+function printer(px, py) {
+  block('printer', px - 15 * CUR.frame.ppm / 30, py - 12 * CUR.frame.ppm / 30, px + 15 * CUR.frame.ppm / 30, py + 12 * CUR.frame.ppm / 30, 0.95);
+  box('desk', 0.8, 0.06, 0.5, mx(px), 0.98, mz(py));
+}
+// Espresso machine standing on a counter, its front facing [fx, fy]; steam rises from the cup under the spout.
+function coffeeMachine(px, py, [fx, fy]) {
+  const x = mx(px), z = mz(py), yaw = Math.atan2(fx, fy), top = 0.92;
+  const part = (key, geo, lx, ly, lz) => place(key, geo, lx, ly, lz, yaw, x, z);
+  part('coffee', B(0.42, 0.52, 0.4), 0, top + 0.26, 0);
+  part('bean', Cyl(0.1, 0.08, 0.16), -0.09, top + 0.6, -0.04);
+  part('metal', B(0.34, 0.14, 0.02), 0, top + 0.42, 0.2);
+  part('metal', B(0.3, 0.03, 0.17), 0, top + 0.02, 0.26);
+  part('metal', B(0.09, 0.08, 0.1), 0, top + 0.29, 0.24);
+  part('red', B(0.03, 0.03, 0.01), 0.12, top + 0.42, 0.215);
+  part('counter', Cyl(0.045, 0.038, 0.09), 0, top + 0.08, 0.26);
+  part('bean', Cyl(0.04, 0.04, 0.005), 0, top + 0.125, 0.26);
+  part('counter', Cyl(0.046, 0.04, 0.22), 0.34, top + 0.11, -0.02);
+  const cup = new THREE.Vector3(x + Math.sin(yaw) * 0.26, top + 0.13, z + Math.cos(yaw) * 0.26);
+  CUR.steamSources.push(() => cup);
+}
+// Music gear facing [fx, fy] (towards the player / audience): 'drums' | 'keyboard' | 'guitar' | 'amp'.
+function music(kind, px, py, [fx, fy]) {
+  const x = mx(px), z = mz(py), yaw = Math.atan2(fx, fy);
+  const part = (key, geo, lx, ly, lz) => place(key, geo, lx, ly, lz, yaw, x, z);
+  const lying = (r, len) => Cyl(r, r, len, 20).rotateX(Math.PI / 2);   // drum or guitar body facing +z
+  const stand = (lx, lz, h) => part('metal', Cyl(0.015, 0.015, h, 8), lx, h / 2, lz);
+  if (kind === 'drums') {
+    part('red', lying(0.28, 0.4), 0, 0.28, 0.25);                          // bass drum
+    part('counter', Cyl(0.18, 0.18, 0.14, 20), -0.32, 0.6, -0.02);         // snare
+    for (const s of [-1, 1]) part('red', Cyl(0.15, 0.15, 0.18, 20), s * 0.16, 0.76, 0.3);   // toms
+    part('red', Cyl(0.2, 0.2, 0.36, 20), 0.45, 0.42, 0.02);               // floor tom
+    for (const [lx, h, lz] of [[-0.58, 1.05, 0.32], [0.6, 1.15, 0.38], [-0.6, 0.82, -0.08]]) {
+      stand(lx, lz, h);
+      part('tub', Cyl(0.22, 0.22, 0.015, 20), lx, h, lz);                  // cymbals and hi-hat
+    }
+    part('chair', Cyl(0.2, 0.18, 0.08, 16), 0, 0.5, -0.45);                // drum stool
+    stand(0, -0.45, 0.46);
+    obstacle(x, z, 0.75, 0.65, yaw);
+  } else if (kind === 'keyboard') {
+    for (const s of [-1, 1]) part('metal', B(0.04, 0.72, 0.3), s * 0.45, 0.36, 0);
+    part('screen', B(1.25, 0.08, 0.36), 0, 0.76, 0);
+    part('counter', B(1.12, 0.02, 0.16), 0, 0.81, 0.08);                   // white keys
+    part('chair', B(0.7, 0.08, 0.32), 0, 0.48, 0.55);                      // bench
+    for (const s of [-1, 1]) part('metal', B(0.04, 0.44, 0.04), s * 0.3, 0.22, 0.55);
+    obstacle(x, z, 0.65, 0.5, yaw);
+  } else if (kind === 'guitar') {
+    part('metal', B(0.3, 0.04, 0.2), 0, 0.02, 0);
+    part('wood', lying(0.19, 0.09), 0, 0.42, 0);                            // lower bout
+    part('wood', lying(0.15, 0.09), 0, 0.66, 0);                            // upper bout
+    part('screen', lying(0.05, 0.1), 0, 0.55, 0.01);                        // sound hole
+    part('screen', B(0.06, 0.55, 0.03), 0, 1.02, 0);                        // neck
+    part('wood', B(0.09, 0.14, 0.03), 0, 1.35, 0);                          // head
+    obstacle(x, z, 0.22, 0.2, yaw);
+  } else if (kind === 'amp') {
+    part('screen', B(0.5, 0.45, 0.3), 0, 0.225, 0);
+    part('concrete', B(0.42, 0.3, 0.02), 0, 0.2, 0.15);                     // grille
+    part('red', B(0.04, 0.04, 0.02), 0.17, 0.4, 0.15);
+    obstacle(x, z, 0.25, 0.15, yaw);
+  }
+}
+// Two straight flights side by side along the room's long side.
+function stairs([x1, y1, x2, y2]) {
+  const along = Math.abs(x2 - x1) >= Math.abs(y2 - y1);
+  const [u0, u1] = along ? [mx(x1) + 0.12, mx(x2) - 0.12] : [mz(y1) + 0.12, mz(y2) - 0.12];
+  const [v0, v1] = along ? [mz(y1) + 0.12, mz(y2) - 0.12] : [mx(x1) + 0.12, mx(x2) - 0.12];
+  const step = (lu, lv, su, sv, h) => along ? box('stairs', su, h, sv, lu, h / 2, lv) : box('stairs', sv, h, su, lv, h / 2, lu);
+  const mid = (v0 + v1) / 2, landing = 1.1, n = 8, run = (u1 - u0 - landing) / n, rise = 0.13;
+  for (let k = 0; k < n; k++) {
+    step(u0 + run * (k + 0.5), (v0 + mid - 0.04) / 2, run, mid - v0 - 0.04, rise * (k + 1));
+    step(u1 - landing - run * (k + 0.5), (v1 + mid + 0.04) / 2, run, v1 - mid - 0.04, rise * (n + k + 1));
+  }
+  step(u1 - landing / 2, (v0 + v1) / 2, landing, v1 - v0, rise * n);
+}
+// Elevator shafts with sliding doors on one face ('w' | 'e' | 'n' | 's').
+function elevators({ cars, side }) {
+  const xs = cars.flatMap(c => [c[0], c[2]]), ys = cars.flatMap(c => [c[1], c[3]]);
+  block('concrete', Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys), 2.4);
+  const [ox, oz] = { w: [-1, 0], e: [1, 0], n: [0, -1], s: [0, 1] }[side];
+  const out = new THREE.Vector3(ox, 0, oz), along = new THREE.Vector3(Math.abs(oz), 0, Math.abs(ox));
+  for (const [x1, y1, x2, y2] of cars) {
+    const cx = (mx(x1) + mx(x2)) / 2, cz = (mz(y1) + mz(y2)) / 2;
+    const door = new THREE.Vector3(side === 'w' ? mx(x1) : side === 'e' ? mx(x2) : cx, 0, side === 'n' ? mz(y1) : side === 's' ? mz(y2) : cz);
+    const thin = (a, b) => along.x ? B(a, 2.05, b) : B(b, 2.05, a);
+    const opening = new THREE.Mesh(thin(1.1, 0.02), MATS.screen);
+    opening.position.copy(door).addScaledVector(out, 0.012).setY(1.03);
+    CUR.group.add(opening);
+    const panels = [-1, 1].map(s => {
+      const m = new THREE.Mesh(thin(0.55, 0.04), MATS.metal);
+      m.userData.base = door.clone().addScaledVector(along, s * 0.275).addScaledVector(out, 0.035).setY(1.03);
+      m.userData.dir = along.clone().multiplyScalar(s);
+      m.position.copy(m.userData.base);
+      CUR.group.add(m);
+      return m;
+    });
+    const btn = door.clone().addScaledVector(along, 0.75).addScaledVector(out, 0.03);
+    box('red', along.x ? 0.06 : 0.03, 0.12, along.x ? 0.03 : 0.06, btn.x, 1.15, btn.z);
+    CUR.cars.push({ inside: new THREE.Vector3(cx, 0, cz), door, front: door.clone().addScaledVector(out, 0.8),
+      yawOut: Math.atan2(ox, oz), panels, open: 0, target: 0 });
+  }
+}
+
+const FURNISH = {
+  deskAt: (px, py, L, W, ry, side) => deskM(mx(px), mz(py), L, W, ry, side),
+  table, cafeTable, roundTable: (px, py, r, h) => roundTable(px, py, r, h), armchair, tubChair, sofaRun, plant, block,
+  counter, planter, stool, tv, sink, printer, coffeeMachine, music,
+};
+
+function mulberry32(a) {
+  return () => {
+    a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function inPoly(x, z, poly) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, zi] = poly[i], [xj, zj] = poly[j];
+    if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c;
+  }
+  return c;
+}
+
+// Who is in the office: desk workers by room busyness, people at tables, and chatting groups.
+function chooseCrew(F) {
+  const rand = F.rand, spec = F.L.crew || {};
+  const levels = spec.busy || [0, 0, 0, 0.2, 0.3, 0.3, 0.4, 0.4, 0.5, 0.5, 0.6, 0.6, 0.7, 0.8].sort(() => rand() - 0.5);
+  const teams = F.rooms.filter(r => r.type === 'team').map((r, i) => ({ poly: r.polyM, busy: levels[i % levels.length] }));
+  for (const s of F.deskSeats) {
+    const team = teams.find(t => inPoly(s.x, s.z, t.poly));
+    if (rand() < (team ? team.busy : 0.5)) F.crew.push({ kind: 'desk', ...s, seatH: 0.5 });
+  }
+  for (const tb of spec.tables || []) {
+    const seats = F.tableSeats.filter(s => s.table === tb.table);
+    const picked = Array.isArray(tb.seats) ? tb.seats : seats.map((_, i) => i).filter(() => rand() < (tb.seats ?? 0.6));
+    const kind = tb.activity === 'eat' ? 'eat' : 'meeting';
+    for (const i of picked) {
+      const s = seats[i];
+      if (!s) continue;
+      F.crew.push({ kind, ...s, seatH: 0.5, presenter: i === tb.presenter });
+      if (kind === 'eat') {
+        const px = s.x + Math.sin(s.yaw) * 0.6, pz = s.z + Math.cos(s.yaw) * 0.6;
+        cyl('counter', 0.13, 0.11, 0.015, px, 0.775, pz, 20);
+        cyl('food', 0.07, 0.08, 0.04, px, 0.8, pz, 10);
+      }
+    }
+  }
+  for (const g of spec.groups || []) {
+    const group = { members: [], talk: g.talk || [], offset: rand() * 10 };
+    for (const p of g.people) {
+      const c = { kind: { stool: 'stool', machine: 'machine' }[p.pose] || 'chat', x: mx(p.x), z: mz(p.y),
+        yaw: Math.atan2(p.face[0], p.face[1]), seatH: p.pose === 'stool' ? 0.77 : 0, cup: !!p.cup, group };
+      F.crew.push(c);
+      group.members.push(c);
+    }
+    F.groups.push(group);
+  }
+}
+
+const FLOORS = [];
+function buildFloor(def) {
+  const h = floorHelpers(def.frame), L = def.layout(h);
+  const F = CUR = {
+    id: def.id, def, frame: def.frame, L, group: new THREE.Group(), batch: {}, obst: [], deskSeats: [], tableSeats: [],
+    tableCount: 0, navSegs: [], jambs: [], cars: [], steamSources: [], rooms: [], crew: [], groups: [], steam: [],
+    rand: mulberry32(def.id * 101 + 7),
+  };
+  F.group.visible = false;
+  scene.add(F.group);
+  F.slabM = h.std.slab.map(toM);
+  F.voidsM = (L.voids || []).map(p => p.map(toM));
+
+  // Slab (its top is the corridor floor) and floor colors.
+  const slabGeo = new THREE.ExtrudeGeometry(shapeOf(h.std.slab), { depth: 0.35, bevelEnabled: false });
+  slabGeo.rotateX(-Math.PI / 2);
+  slabGeo.translate(0, -0.35, 0);
+  const slab = new THREE.Mesh(slabGeo, [toon(COLORS.corridor), toon(COLORS.slabSide)]);
+  slab.receiveShadow = true;
+  F.group.add(slab, new THREE.LineSegments(new THREE.EdgesGeometry(slabGeo, 40), lineMat));
+  h.std.lounges.forEach(p => floorMesh(p, COLORS.lounge));
+  h.std.terraces.forEach(p => floorMesh(p, COLORS.deck));
+  (L.areas || []).forEach(([p, c]) => floorMesh(p, COLORS[c]));
+  (L.voids || []).forEach(p => floorMesh(p, COLORS.void, 0.012));
+  for (const r of L.rooms) {
+    const room = { ...r, floor: F, polyM: r.poly.map(toM), spotM: toM(r.spot) };
+    room.floorMesh = floorMesh(r.poly, COLORS[r.color] ?? COLORS[r.type] ?? COLORS.other, 0.012);
+    const [lx, ly] = r.labelAt || centroid(r.poly);
+    room.label = makeLabel(r.name, r.type, lx, ly, r.type === 'team' ? 2.4 : 2.7);
+    F.rooms.push(room);
+  }
+  (L.labels || []).forEach(([t, x, y]) => makeLabel(t, 'service', x, y, 2.6));
+
+  // Walls, glass and doors.
+  const doors = L.doors || [];
+  buildWalls(cutDoors(segmentsOf(L.walls), doors), WALL_H, 0.12, 'wall', 'cap', 0.06 + 0.75 * G);
+  buildWalls(cutDoors(segmentsOf(L.glass || []), doors), WALL_H, 0.05, 'glass', 'glassCap', 0.03 + 0.75 * G);
+  const shell = [...h.std.facade, ...Object.values(h.std.curves)];
+  buildWalls(segmentsOf(shell), FACADE_H, 0.06, 'glass', 'glassCap', 0.03 + 0.75 * G);
+  mullions(shell);
+  F.jambs.forEach(([x, y]) => box('cap', 0.07, WALL_H, 0.07, mx(x), WALL_H / 2, mz(y)));
+
+  // Furniture.
+  (L.deskClusters || []).forEach(deskCluster);
+  for (const { c, u, chair } of L.rotDesks || []) {
+    deskToward(mx(c[0]), mz(c[1]), 1.6, 0.8, Math.atan2(-u[1], u[0]), [chair[0] - c[0], chair[1] - c[1]]);
+  }
+  (L.tables || []).forEach(([r, n]) => table(r, n));
+  for (const [x, y] of L.columns || []) {
+    box('column', 0.9, FACADE_H, 0.9, mx(x), FACADE_H / 2, mz(y));
+    obstacle(mx(x), mz(y), 0.45, 0.45);
+  }
+  (L.stairs || []).forEach(stairs);
+  if (L.elevator) elevators(L.elevator);
+  // Fire extinguishers next to the lounge doors.
+  for (const [[ax, ay], [bx, by]] of h.std.loungeWalls) {
+    const x = ax + (bx - ax) * 0.16, y = ay + (by - ay) * 0.16, d = Math.hypot(F.frame.cx - x, F.frame.cy - y), k = 8 * F.frame.ppm / 30;
+    cyl('red', 0.08, 0.08, 0.5, mx(x + (F.frame.cx - x) / d * k), 0.25, mz(y + (F.frame.cy - y) / d * k), 12);
+  }
+  L.furnish?.(FURNISH);
+  chooseCrew(F);
+  flushBatches();
+  buildCrew(F);
+  FLOORS.push(F);
+  return F;
+}
+
+/* ==========================================================================
+   3. PATH FINDING (per floor, built on first use: A* on a 15 cm grid, then smoothed)
+   ========================================================================== */
+const X0 = -23, Z0 = -23, NX = Math.round(46 / G), NZ = NX, N = NX * NZ;
+const cellX = i => X0 + (i % NX + 0.5) * G, cellZ = i => Z0 + (Math.floor(i / NX) + 0.5) * G;
+const cellAt = (x, z) => Math.floor((z - Z0) / G) * NX + Math.floor((x - X0) / G);
+const WALK_MIN = 0.25;   // min distance (m) from any blocked cell to stand on a cell
+const STEPS = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, Math.SQRT2], [1, -1, Math.SQRT2], [-1, 1, Math.SQRT2], [-1, -1, Math.SQRT2]];
+
+class MinHeap {
+  constructor() { this.k = []; this.v = []; }
+  get size() { return this.k.length; }
+  push(key, val) {
+    const k = this.k, v = this.v;
+    let i = k.length;
+    k.push(key); v.push(val);
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (k[p] <= key) break;
+      k[i] = k[p]; v[i] = v[p]; i = p;
+    }
+    k[i] = key; v[i] = val;
+  }
+  pop() {
+    const k = this.k, v = this.v, top = v[0], lk = k.pop(), lv = v.pop(), n = k.length;
+    if (n) {
+      let i = 0;
+      for (;;) {
+        let c = 2 * i + 1;
+        if (c >= n) break;
+        if (c + 1 < n && k[c + 1] < k[c]) c++;
+        if (k[c] >= lk) break;
+        k[i] = k[c]; v[i] = v[c]; i = c;
+      }
+      k[i] = lk; v[i] = lv;
+    }
+    return top;
+  }
+}
+
+const navOf = F => (F.nav ||= makeNav(F));
+function makeNav(F) {
+  const blocked = new Uint8Array(N), dist = new Float32Array(N), busy = new Uint8Array(N);
+  const walkable = i => dist[i] >= WALK_MIN;
+  const rasterize = (x0, z0, x1, z1, test, grid = blocked) => {
+    const i0 = Math.max(0, Math.floor((x0 - X0) / G)), i1 = Math.min(NX - 1, Math.floor((x1 - X0) / G));
+    const j0 = Math.max(0, Math.floor((z0 - Z0) / G)), j1 = Math.min(NZ - 1, Math.floor((z1 - Z0) / G));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      if (test(X0 + (i + 0.5) * G, Z0 + (j + 0.5) * G)) grid[j * NX + i] = 1;
+    }
+  };
+  for (let i = 0; i < N; i++) if (!inPoly(cellX(i), cellZ(i), F.slabM)) blocked[i] = 1;
+  for (const poly of F.voidsM) {
+    const xs = poly.map(p => p[0]), zs = poly.map(p => p[1]);
+    rasterize(Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs), (x, z) => inPoly(x, z, poly));
+  }
+  for (const [ax, az, bx, bz, r] of F.navSegs) {
+    const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz;
+    rasterize(Math.min(ax, bx) - r, Math.min(az, bz) - r, Math.max(ax, bx) + r, Math.max(az, bz) + r, (x, z) => {
+      const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
+      return Math.hypot(x - ax - t * dx, z - az - t * dz) <= r;
+    });
+  }
+  for (const { x, z, hw, hd, ry } of F.obst) {
+    const c = Math.cos(ry), s = Math.sin(ry), r = 0.5 * G, R = Math.hypot(hw, hd) + r;
+    rasterize(x - R, z - R, x + R, z + R, (px, pz) => {
+      const lx = (px - x) * c - (pz - z) * s, lz = (px - x) * s + (pz - z) * c;
+      return Math.abs(lx) <= hw + r && Math.abs(lz) <= hd + r;
+    });
+  }
+  // Cells next to people stay walkable but are avoided when possible.
+  for (const { x, z, seatH } of F.crew) {
+    const r = seatH ? 0.5 : 0.4;
+    rasterize(x - r, z - r, x + r, z + r, (px, pz) => Math.hypot(px - x, pz - z) <= r, busy);
+  }
+  // Chamfer distance transform: distance (m) from each cell to the nearest blocked cell.
+  for (let i = 0; i < N; i++) dist[i] = blocked[i] ? 0 : 1e9;
+  const D1 = G, D2 = G * Math.SQRT2;
+  const relax = (i, j, di, dj, d) => {
+    const ii = i + di, jj = j + dj;
+    if (ii < 0 || jj < 0 || ii >= NX || jj >= NZ) return;
+    const k = j * NX + i, v = dist[jj * NX + ii] + d;
+    if (v < dist[k]) dist[k] = v;
+  };
+  for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
+    relax(i, j, -1, 0, D1); relax(i, j, -1, -1, D2); relax(i, j, 0, -1, D1); relax(i, j, 1, -1, D2);
+  }
+  for (let j = NZ - 1; j >= 0; j--) for (let i = NX - 1; i >= 0; i--) {
+    relax(i, j, 1, 0, D1); relax(i, j, 1, 1, D2); relax(i, j, 0, 1, D1); relax(i, j, -1, 1, D2);
+  }
+
+  // Nearest walkable cell to a point (breadth-first search).
+  function snap([x, z]) {
+    const start = cellAt(x, z), seen = new Uint8Array(N), queue = [start];
+    seen[start] = 1;
+    for (let q = 0; q < queue.length; q++) {
+      const c = queue[q];
+      if (walkable(c)) return c;
+      const i = c % NX, j = Math.floor(c / NX);
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const ii = i + di, jj = j + dj, n = jj * NX + ii;
+        if (ii >= 0 && jj >= 0 && ii < NX && jj < NZ && !seen[n]) { seen[n] = 1; queue.push(n); }
+      }
+    }
+    return -1;
+  }
+  function astar(s, t) {
+    const g = new Float32Array(N).fill(Infinity), came = new Int32Array(N).fill(-1), done = new Uint8Array(N);
+    const ti = t % NX, tj = Math.floor(t / NX);
+    const h = c => { const dx = Math.abs(c % NX - ti), dz = Math.abs(Math.floor(c / NX) - tj); return (Math.max(dx, dz) + (Math.SQRT2 - 1) * Math.min(dx, dz)) * G; };
+    const open = new MinHeap();
+    g[s] = 0;
+    open.push(h(s), s);
+    while (open.size) {
+      const c = open.pop();
+      if (c === t) break;
+      if (done[c]) continue;
+      done[c] = 1;
+      const i = c % NX, j = Math.floor(c / NX);
+      for (const [di, dj, len] of STEPS) {
+        const ii = i + di, jj = j + dj, n = jj * NX + ii;
+        if (ii < 0 || jj < 0 || ii >= NX || jj >= NZ || !walkable(n) || done[n]) continue;
+        if (di && dj && (!walkable(j * NX + ii) || !walkable(jj * NX + i))) continue;
+        // Prefer the middle of corridors, and not squeezing past people.
+        const cost = len * G * (1 + 3 * Math.max(0, 1 - dist[n] / 0.9)) * (busy[n] ? 6 : 1);
+        if (g[c] + cost < g[n]) { g[n] = g[c] + cost; came[n] = c; open.push(g[n] + h(n), n); }
+      }
+    }
+    if (came[t] < 0 && s !== t) return null;
+    const path = [t];
+    while (path[path.length - 1] !== s) path.push(came[path[path.length - 1]]);
+    return path.reverse();
+  }
+  function lineClear(a, b, minDist, allowBusy) {
+    const ax = cellX(a), az = cellZ(a), bx = cellX(b), bz = cellZ(b);
+    const n = Math.ceil(Math.hypot(bx - ax, bz - az) / (G * 0.5));
+    for (let k = 1; k < n; k++) {
+      const c = cellAt(ax + (bx - ax) * k / n, az + (bz - az) * k / n);
+      if (dist[c] < minDist || (busy[c] && !allowBusy)) return false;
+    }
+    return true;
+  }
+  // String-pulling: skip grid points while the straight line keeps at least as much clearance as
+  // the A* path had (capped at 0.6 m) and doesn't cut past people.
+  function pull(path) {
+    const out = [path[0]];
+    let i = 0;
+    while (i < path.length - 1) {
+      let best = i + 1, minD = Math.min(dist[path[i]], dist[path[i + 1]]), nearPeople = busy[path[i]] || busy[path[i + 1]];
+      for (let j = i + 2; j < path.length; j++) {
+        minD = Math.min(minD, dist[path[j]]);
+        nearPeople = nearPeople || busy[path[j]];
+        if (!lineClear(path[i], path[j], Math.min(0.6, minD), nearPeople)) break;
+        best = j;
+      }
+      out.push(path[best]);
+      i = best;
+    }
+    return out;
+  }
+  const cellPoint = c => new THREE.Vector3(cellX(c), 0, cellZ(c));
+  return {
+    point: p => { const c = snap(p); return c < 0 ? null : cellPoint(c); },
+    // Corner points of the walking route between two points (meters), or null.
+    corners(from, to) {
+      const s = snap(from), t = snap(to);
+      if (s < 0 || t < 0) return null;
+      const cells = astar(s, t);
+      return cells && pull(cells).map(cellPoint);
+    },
+  };
+}
+function smoothPath(corners) {
+  const dense = [corners[0]];
+  for (let k = 1; k < corners.length; k++) {
+    const a = corners[k - 1], b = corners[k], n = Math.max(1, Math.ceil(a.distanceTo(b) / 0.7));
+    for (let q = 1; q <= n; q++) dense.push(a.clone().lerp(b, q / n));
+  }
+  if (dense.length < 2) dense.push(dense[0].clone().add(new THREE.Vector3(0.01, 0, 0)));
+  const curve = new THREE.CatmullRomCurve3(dense, false, 'centripetal');
+  const len = curve.getLength();
+  return { pts: curve.getSpacedPoints(Math.max(2, Math.ceil(len / 0.05))), len };
+}
+// Route between two rooms; across floors it goes through the elevators.
+function planTrip(from, to) {
+  const A = from.floor, Bf = to.floor;
+  if (A === Bf) {
+    const c = navOf(A).corners(from.spotM, to.spotM);
+    return c && { legs: [{ floor: A, ...smoothPath(c) }] };
+  }
+  if (!A.cars.length || !Bf.cars.length) return null;
+  // Take the car whose doors are closest to where you start; the same car arrives on the other floor.
+  const start = new THREE.Vector3(from.spotM[0], 0, from.spotM[1]);
+  const k = A.cars.reduce((best, car, i) => car.front.distanceTo(start) < A.cars[best].front.distanceTo(start) ? i : best, 0);
+  const carA = A.cars[k], carB = Bf.cars[Math.min(k, Bf.cars.length - 1)];
+  const c1 = navOf(A).corners(from.spotM, [carA.front.x, carA.front.z]);
+  const c2 = navOf(Bf).corners([carB.front.x, carB.front.z], to.spotM);
+  if (!c1 || !c2) return null;
+  return { carA, carB, legs: [
+    { floor: A, ...smoothPath(c1) },
+    { floor: Bf, ...smoothPath([carB.inside.clone(), carB.door.clone(), ...c2]) },
+  ] };
+}
+
+/* ==========================================================================
+   4. PEOPLE
+   ========================================================================== */
+const PERSON_GEO = {
+  thigh: new THREE.CapsuleGeometry(0.075, 0.3, 4, 10), shin: new THREE.CapsuleGeometry(0.068, 0.28, 4, 10),
+  shoe: new THREE.BoxGeometry(0.13, 0.08, 0.25), upper: new THREE.CapsuleGeometry(0.06, 0.2, 4, 8),
+  fore: new THREE.CapsuleGeometry(0.055, 0.18, 4, 8), hand: new THREE.SphereGeometry(0.07, 10, 8),
+  torso: new THREE.CapsuleGeometry(0.19, 0.42, 4, 12), head: new THREE.SphereGeometry(0.16, 20, 16),
+  hair: new THREE.SphereGeometry(0.168, 20, 16), longHair: new THREE.BoxGeometry(0.3, 0.34, 0.1),
+  bun: new THREE.SphereGeometry(0.075, 12, 10), eye: new THREE.SphereGeometry(0.022, 8, 6),
+  cup: new THREE.CylinderGeometry(0.045, 0.038, 0.1, 14), coffee: new THREE.CylinderGeometry(0.04, 0.04, 0.005, 14),
+};
+const OUTLINE_MAT = new THREE.MeshBasicMaterial({ color: 0x1c1830, side: THREE.BackSide });
+const EYE_MAT = new THREE.MeshBasicMaterial({ color: 0x111111 });
+const TOONS = {};
+const toonOf = color => (TOONS[color] ||= toon(color));
+// A toon person with hips/knees, shoulders/elbows and a head that can turn.
+// Background people get fewer outlines and shadows to keep the draw-call count low.
+function makePerson(parent, { shirt = 0x6d35e8, pants = 0x2d3250, skin = 0xf2c9a0, hair = 0x3a2618, shoes = 0xffffff,
+  hairStyle = 'short', shortSleeves = false, detailed = true, cup = false } = {}) {
+  const root = new THREE.Group(), body = new THREE.Group();
+  root.add(body);
+  const add = (par, geo, color, x, y, z, outline = 1.08, shadow = detailed) => {
+    const m = new THREE.Mesh(geo, toonOf(color));
+    m.position.set(x, y, z);
+    m.castShadow = shadow;
+    if (outline) { const o = new THREE.Mesh(geo, OUTLINE_MAT); o.scale.setScalar(outline); m.add(o); }
+    par.add(m);
+    return m;
+  };
+  const limbOutline = detailed ? 1.08 : 0;
+  const pivot = (par, x, y) => { const g = new THREE.Group(); g.position.set(x, y, 0); par.add(g); return g; };
+  const legs = [0.1, -0.1].map(x => {
+    const hip = pivot(body, x, 0.9), knee = pivot(hip, 0, -0.43);
+    add(hip, PERSON_GEO.thigh, pants, 0, -0.21, 0, limbOutline);
+    add(knee, PERSON_GEO.shin, pants, 0, -0.2, 0, limbOutline);
+    add(knee, PERSON_GEO.shoe, shoes, 0, -0.43, 0.04, detailed ? 1.12 : 0);
+    return [hip, knee];
+  });
+  const arms = [0.27, -0.27].map(x => {
+    const sh = pivot(body, x, 1.42), el = pivot(sh, 0, -0.29);
+    add(sh, PERSON_GEO.upper, shirt, 0, -0.15, 0);
+    add(el, PERSON_GEO.fore, shortSleeves ? skin : shirt, 0, -0.13, 0, limbOutline);
+    add(el, PERSON_GEO.hand, skin, 0, -0.3, 0, limbOutline);
+    return [sh, el];
+  });
+  add(body, PERSON_GEO.torso, shirt, 0, 1.2, 0, 1.08, true);
+  const head = pivot(body, 0, 1.52);
+  add(head, PERSON_GEO.head, skin, 0, 0.16, 0, 1.08, true);
+  if (hairStyle !== 'bald') {
+    const curly = hairStyle === 'curly';
+    add(head, PERSON_GEO.hair, hair, 0, 0.21, -0.025, 1.06).scale.set(curly ? 1.12 : 1, curly ? 0.95 : 0.82, curly ? 1.12 : 1);
+    if (hairStyle === 'long') add(head, PERSON_GEO.longHair, hair, 0, 0.04, -0.11, 1.06);
+    if (hairStyle === 'bun') add(head, PERSON_GEO.bun, hair, 0, 0.36, -0.07, 1.1);
+  }
+  for (const s of [-1, 1]) { const e = new THREE.Mesh(PERSON_GEO.eye, EYE_MAT); e.position.set(s * 0.055, 0.17, 0.145); head.add(e); }
+  const p = { root, body, head, hipL: legs[0][0], kneeL: legs[0][1], hipR: legs[1][0], kneeR: legs[1][1],
+    shL: arms[0][0], elL: arms[0][1], shR: arms[1][0], elR: arms[1][1] };
+  if (cup) {
+    p.cup = add(p.elR, PERSON_GEO.cup, 0xffffff, 0, -0.33, 0.06, 1.12);
+    const coffee = new THREE.Mesh(PERSON_GEO.coffee, toonOf(0x6f4e37));
+    coffee.position.y = 0.05;
+    p.cup.add(coffee);
+  }
+  parent.add(root);
+  return p;
+}
+function sit(p, seatH) {
+  p.body.position.y = seatH + 0.07 - 0.9;
+  p.hipL.rotation.x = p.hipR.rotation.x = -Math.PI / 2;
+  p.kneeL.rotation.x = p.kneeR.rotation.x = Math.PI / 2;
+}
+// Keep a held cup upright whatever the arm is doing.
+function levelCup(p) { if (p.cup) p.cup.rotation.x = -(p.shR.rotation.x + p.elR.rotation.x); }
+function lookToward(p, x, z, dt, max = 1.2) {
+  const yaw = Math.atan2(x - p.root.position.x, z - p.root.position.z) - p.root.rotation.y;
+  const local = THREE.MathUtils.clamp(Math.atan2(Math.sin(yaw), Math.cos(yaw)), -max, max);
+  p.head.rotation.y += (local - p.head.rotation.y) * (1 - Math.exp(-5 * dt));
+}
+
+const SHIRTS = [0x3fa7d6, 0xf25f5c, 0xffd23f, 0x59cd90, 0xf7a072, 0x00bbf9, 0xee6c4d, 0x2ec4b6, 0xff99c8, 0xfcbf49,
+  0x8d99ae, 0xffffff, 0x1d3557, 0x9ad1d4];
+const PANTS = [0x2d3250, 0x3d405b, 0x264653, 0x6b705c, 0x1d3557, 0x8d99ae, 0x5c4033];
+const SKINS = [0xf2c9a0, 0xe0ac69, 0xc68642, 0x8d5524, 0xffdbac, 0xf1c27d];
+const HAIRS = [0x3a2618, 0x1b1b1b, 0x6a4e42, 0xb5651d, 0xe6c07b, 0x8e8e8e, 0x2b1d14];
+const STYLES = ['short', 'short', 'long', 'bun', 'curly', 'short', 'long', 'bald'];
+const steamTex = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d'), grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+})();
+const tmpV = new THREE.Vector3();
+
+function buildCrew(F) {
+  const rand = F.rand, pick = list => list[Math.floor(rand() * list.length)];
+  for (const c of F.crew) {
+    const social = ['chat', 'stool', 'machine'].includes(c.kind);
+    c.p = makePerson(F.group, {
+      shirt: pick(SHIRTS), pants: pick(PANTS), skin: pick(SKINS), hair: pick(HAIRS), hairStyle: pick(STYLES),
+      shoes: pick([0xffffff, 0x222222, 0x8b5a2b]), shortSleeves: rand() < 0.5, detailed: social, cup: c.cup,
+    });
+    const back = c.kind === 'stool' ? 0.12 : 0;   // sit back on the stool so the knees clear the bar
+    c.p.root.position.set(c.x - Math.sin(c.yaw) * back, 0, c.z - Math.cos(c.yaw) * back);
+    c.p.root.rotation.y = c.yaw;
+    if (c.seatH) sit(c.p, c.seatH);
+    c.seed = rand() * 10;
+    if (c.group) {
+      const wrap = document.createElement('div');
+      c.bubble = document.createElement('span');
+      c.bubble.className = 'bubble';
+      wrap.append(c.bubble);
+      const obj = new CSS2DObject(wrap);
+      obj.position.y = 0.62;
+      c.p.head.add(obj);
+    }
+    if (c.p.cup) F.steamSources.push(() => c.p.cup.getWorldPosition(tmpV));
+  }
+  // People at the same table look at its presenter, or at the table's middle.
+  for (const c of F.crew) {
+    if (c.kind !== 'meeting' && c.kind !== 'eat') continue;
+    const mates = F.crew.filter(o => o.table === c.table && (o.kind === 'meeting' || o.kind === 'eat'));
+    c.focus = mates.find(o => o.presenter)?.p.root.position
+      || new THREE.Vector3(mates.reduce((s, o) => s + o.x, 0) / mates.length, 0, mates.reduce((s, o) => s + o.z, 0) / mates.length);
+  }
+  for (const source of F.steamSources) {
+    const puffs = [0, 1, 2].map(() => {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: steamTex, transparent: true, depthWrite: false }));
+      F.group.add(s);
+      return s;
+    });
+    F.steam.push({ source, puffs, seed: rand() });
+  }
+}
+
+function animateFloor(F, t, dt) {
+  const speakers = new Set(), lines = new Map();
+  for (const g of F.groups) {
+    if (!g.talk.length) continue;
+    const [i, line] = g.talk[Math.floor(t / 2.8 + g.offset) % g.talk.length];
+    speakers.add(g.members[i]);
+    lines.set(g.members[i], line);
+    g.speaker = g.members[i];
+  }
+  for (const c of F.crew) {
+    const p = c.p, s = c.seed;
+    if (c.kind === 'desk') {
+      // Typing, with the odd pause to look around or stretch.
+      const typing = Math.sin(t * 0.5 + s * 9) > -0.4, stretch = Math.sin(t * 0.13 + s * 3) > 0.96;
+      p.shL.rotation.x = p.shR.rotation.x = stretch ? -2.9 : -0.55;
+      p.elL.rotation.x = stretch ? -0.5 : -0.95 + (typing ? Math.sin(t * 15 + s * 5) * 0.07 : 0);
+      p.elR.rotation.x = stretch ? -0.5 : -0.95 + (typing ? Math.sin(t * 15 + s * 5 + 2) * 0.07 : 0);
+      p.head.rotation.y = Math.sin(t * 0.23 + s * 11) * (typing ? 0.15 : 0.6);
+      p.head.rotation.x = typing ? 0.12 : 0;
+    } else if (c.kind === 'meeting') {
+      p.shL.rotation.x = p.shR.rotation.x = -0.45;
+      p.elL.rotation.x = p.elR.rotation.x = -1.05;
+      if (c.presenter) {
+        p.shR.rotation.x = -0.9 + Math.sin(t * 3 + s) * 0.25;
+        p.elR.rotation.x = -0.9 + Math.sin(t * 4.3) * 0.3;
+        p.head.rotation.y = Math.sin(t * 0.6) * 0.7;
+      } else {
+        lookToward(p, c.focus.x, c.focus.z, dt);
+      }
+    } else if (c.kind === 'eat') {
+      const ph = (t * 0.33 + s) % 1, bite = ph < 0.16 ? Math.sin(ph / 0.16 * Math.PI) : 0;
+      p.shL.rotation.x = -0.45;
+      p.elL.rotation.x = -1.05;
+      p.shR.rotation.x = -0.45 - bite * 0.45;
+      p.elR.rotation.x = -1.05 - bite * 1.1;
+      p.head.rotation.x = 0.15 - bite * 0.25;
+      if (Math.sin(t * 0.3 + s * 5) > 0.2) lookToward(p, c.focus.x, c.focus.z, dt, 1);
+      else p.head.rotation.y *= 1 - Math.min(1, 3 * dt);
+    } else {
+      // Small talk: hold the cup, sip now and then, gesture while talking, look at whoever talks.
+      const g = c.group, talking = speakers.has(c), phase = (t * 0.17 + s) % 1;
+      const sip = phase < 0.12 && !talking ? Math.sin(phase / 0.12 * Math.PI) : 0;
+      if (c.kind === 'machine') {
+        p.shL.rotation.x = p.shR.rotation.x = -0.35;
+        p.elL.rotation.x = p.elR.rotation.x = -0.9;
+      } else {
+        p.shR.rotation.x = -0.25 - sip * 0.35;
+        p.elR.rotation.x = -1.35 - sip * 0.9;
+        p.shL.rotation.x = talking ? -0.5 + Math.sin(t * 5 + s) * 0.2 : 0.05;
+        p.elL.rotation.x = talking ? -0.9 + Math.sin(t * 6.5) * 0.25 : -0.15;
+      }
+      levelCup(p);
+      let focus = g.speaker?.p.root.position;
+      if (talking || !focus) {
+        const next = g.members[(g.members.indexOf(c) + 1) % g.members.length];
+        focus = next.p.root.position;
+      } else if (c.kind === 'machine' && Math.sin(t * 0.4 + s) > -0.2) {
+        focus = tmpV.set(c.x + Math.sin(c.yaw), 0, c.z + Math.cos(c.yaw));
+      }
+      lookToward(p, focus.x, focus.z, dt, c.kind === 'machine' ? 1.5 : 1.2);
+      p.head.rotation.x = -sip * 0.3;
+      if (!c.seatH) p.body.position.y = Math.sin(t * 1.6 + s) * 0.01;
+      const line = lines.get(c);
+      if (line && c.bubble.textContent !== line) c.bubble.textContent = line;
+      c.bubble.classList.toggle('show', !!line);
+    }
+  }
+  for (const st of F.steam) {
+    const base = st.source();
+    st.puffs.forEach((sp, k) => {
+      const ph = (t * 0.55 + k / 3 + st.seed) % 1;
+      sp.position.set(base.x + Math.sin((ph + k) * 6) * 0.03, base.y + 0.07 + ph * 0.35, base.z);
+      sp.scale.setScalar(0.05 + ph * 0.12);
+      sp.material.opacity = 0.6 * Math.sin(ph * Math.PI);
+    });
+  }
+  for (const car of F.cars) {
+    car.open += (car.target - car.open) * (1 - Math.exp(-6 * dt));
+    for (const m of car.panels) m.position.copy(m.userData.base).addScaledVector(m.userData.dir, car.open * 0.5);
+  }
+}
+
+/* ==========================================================================
+   5. BUILD ALL FLOORS
+   ========================================================================== */
+window.FLOORS.sort((a, b) => b.id - a.id).forEach(buildFloor);
+const floorById = Object.fromEntries(FLOORS.map(f => [f.id, f]));
+const ALL_ROOMS = FLOORS.flatMap(f => f.rooms);
+
+// The walker ("You").
+const P = makePerson(scene);
+{
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.38, 0.52, 40),
+    new THREE.MeshBasicMaterial({ color: 0x6d35e8, transparent: true, opacity: 0.55, depthWrite: false }));
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.03;
+  P.root.add(ring);
+  const tag = document.createElement('div');
+  tag.innerHTML = '<span class="lbl you">You</span>';
+  const tagObj = new CSS2DObject(tag);
+  tagObj.position.y = 2.25;
+  P.root.add(tagObj);
+  P.root.visible = false;
+}
+function pose(ph, amt) {
+  const s = Math.sin(ph) * amt;
+  P.hipL.rotation.x = s * 0.6; P.hipR.rotation.x = -s * 0.6;
+  P.kneeL.rotation.x = Math.max(0, -Math.cos(ph)) * 0.7 * amt;
+  P.kneeR.rotation.x = Math.max(0, Math.cos(ph)) * 0.7 * amt;
+  P.shL.rotation.x = -s * 0.5; P.shR.rotation.x = s * 0.5;
+  P.elL.rotation.x = P.elR.rotation.x = -0.3 * amt;
+  P.shR.rotation.z = 0;
+  P.body.position.y = Math.abs(Math.cos(ph)) * 0.035 * amt;
+}
+
+/* ==========================================================================
+   6. ROUTE RIBBON AND DESTINATION PIN
+   ========================================================================== */
+const ribbonMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  uniforms: {
+    uTime: { value: 0 }, uWalked: { value: 0 }, uFrom: { value: 0 }, uLen: { value: 1 },
+    uA: { value: new THREE.Color(0x6d35e8) }, uB: { value: new THREE.Color(0xff2d75) },
+  },
+  vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `
+    uniform float uTime, uWalked, uFrom, uLen; uniform vec3 uA, uB; varying vec2 vUv;
+    void main() {
+      float d = vUv.x, across = abs(vUv.y - 0.5) * 2.0;
+      vec3 base = mix(uA, uB, clamp((uFrom + d) / uLen, 0.0, 1.0));
+      float k = fract(d / 0.9 - uTime * 1.6 + across * 0.35);
+      float chevron = smoothstep(0.0, 0.05, k) * (1.0 - smoothstep(0.28, 0.33, k)) * step(across, 0.75);
+      vec3 col = mix(base, vec3(1.0), chevron * 0.85);
+      float a = (1.0 - smoothstep(0.8, 1.0, across)) * (d < uWalked ? 0.3 : 0.95);
+      gl_FragColor = vec4(col, a);
+    }`,
+});
+// One ribbon per leg; colors run purple -> pink over the whole trip (uFrom/uLen).
+function drawRibbon(leg, from, total) {
+  const W = 0.42, pos = [], uv = [], idx = [];
+  let s = 0;
+  leg.pts.forEach((p, i) => {
+    if (i) s += p.distanceTo(leg.pts[i - 1]);
+    const a = leg.pts[Math.max(0, i - 1)], b = leg.pts[Math.min(leg.pts.length - 1, i + 1)];
+    const dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l * W / 2, nz = dx / l * W / 2;
+    pos.push(p.x + nx, 0.035, p.z + nz, p.x - nx, 0.035, p.z - nz);
+    uv.push(s, 0, s, 1);
+    if (i) { const k = i * 2; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
+  });
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  const mat = ribbonMat.clone();
+  mat.uniforms.uFrom.value = from;
+  mat.uniforms.uLen.value = total;
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.renderOrder = 5;
+  leg.floor.group.add(mesh);
+  return mesh;
+}
+
+const pin = new THREE.Group();
+{
+  const mat = toon(0xff2d75);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 24, 16), mat);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.62, 24), mat);
+  tip.rotation.x = Math.PI;
+  tip.position.y = -0.42;
+  for (const m of [head, tip]) { const o = new THREE.Mesh(m.geometry, OUTLINE_MAT); o.scale.setScalar(1.08); m.add(o); m.castShadow = true; }
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  dot.position.z = 0.25;
+  pin.add(head, tip, dot);
+  pin.userData.ring = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.55, 40),
+    new THREE.MeshBasicMaterial({ color: 0xff2d75, transparent: true, depthWrite: false }));
+  pin.userData.ring.rotation.x = -Math.PI / 2;
+  pin.visible = pin.userData.ring.visible = false;
+}
+
+/* ==========================================================================
+   7. APP STATE, TRIP, CAMERA
+   ========================================================================== */
+const WALK_SPEED = 1.35, PLAYBACK = 2.2, ELEVATOR_SECONDS = 45;
+const params = new URLSearchParams(location.search);
+// Rooms are keyed "22/Rita"; a bare name matches the first floor that has it.
+const findRoom = key => {
+  if (!key) return null;
+  const [f, name] = key.includes('/') ? key.split('/') : [null, key];
+  return ALL_ROOMS.find(r => r.name === name && (!f || r.floor.id === +f)) || null;
+};
+const keyOf = r => `${r.floor.id}/${r.name}`;
+let fromRoom = findRoom(params.get('from')) || findRoom(localStorage.getItem('icon.myRoom'));
+let toRoom = findRoom(params.get('to'));
+let viewFloor = null, walkerFloor = null, trip = null, phase = 0, waveUntil = 0, highlighted = null;
+let camTween = null, follow = null;
+
+const infoEl = document.getElementById('info'), replayBtn = document.getElementById('replay'), toastEl = document.getElementById('toast');
+const rideEl = document.getElementById('ride'), rideText = document.getElementById('ride-text'), floorsEl = document.getElementById('floors');
+const fmtTime = s => s < 50 ? `~${Math.max(5, Math.round(s / 5) * 5)} sec` : `~${Math.round(s / 60 * 2) / 2} min`;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => toastEl.classList.remove('show'), 2600);
+}
+
+// Floor buttons, top floor first.
+const floorButtons = {};
+for (const F of FLOORS) {
+  const b = document.createElement('button');
+  b.textContent = F.id;
+  b.title = `Floor ${F.id}`;
+  b.addEventListener('click', () => { follow = null; showFloor(F.id); });
+  floorsEl.append(b);
+  floorButtons[F.id] = b;
+}
+function showFloor(id) {
+  viewFloor = id;
+  for (const F of FLOORS) {
+    F.group.visible = F.id === id;
+    floorButtons[F.id].classList.toggle('on', F.id === id);
+  }
+  P.root.visible = !!fromRoom && walkerFloor === id;
+}
+
+function tweenCamera(target, position, dur = 1.3) {
+  camTween = { t: 0, dur, fromT: controls.target.clone(), fromP: camera.position.clone(), toT: target, toP: position };
+}
+function frameRoute(pts) {
+  const bb = new THREE.Box3().setFromPoints(pts), center = bb.getCenter(new THREE.Vector3()), size = bb.getSize(new THREE.Vector3());
+  center.y = 0;
+  const d = THREE.MathUtils.clamp(Math.max(size.x, size.z) * 1.5 + 10, 18, 70);
+  const dir = camera.position.clone().sub(controls.target).setY(0);
+  if (dir.lengthSq() < 1e-6) dir.set(0, 0, 1);
+  dir.normalize();
+  const polar = 0.78;
+  tweenCamera(center, center.clone().addScaledVector(dir, Math.sin(polar) * d).setY(Math.cos(polar) * d));
+  follow = center;
+}
+controls.addEventListener('start', () => { camTween = null; follow = null; });
+
+function setHighlight(room) {
+  if (highlighted) { highlighted.label.classList.remove('hl'); highlighted.floorMesh.material.emissive.setRGB(0, 0, 0); }
+  highlighted = room;
+  if (room) room.label.classList.add('hl');
+  for (const F of FLOORS) floorButtons[F.id].classList.toggle('dest', !!room && room.floor === F);
+}
+function clearTrip() {
+  for (const leg of trip?.plan?.legs || []) { leg.ribbon.removeFromParent(); leg.ribbon.geometry.dispose(); }
+  for (const car of [trip?.plan?.carA, trip?.plan?.carB]) if (car) car.target = 0;
+  trip = null;
+  pin.removeFromParent();
+  pin.userData.ring.removeFromParent();
+  rideEl.classList.remove('show');
+  setHighlight(null);
+  replayBtn.disabled = true;
+}
+function placeWalker(F, pos, yaw = 0) {
+  walkerFloor = F.id;
+  P.root.position.copy(pos);
+  P.root.rotation.y = yaw;
+  pose(0, 0);
+  P.root.visible = viewFloor === F.id;
+}
+function go() {
+  clearTrip();
+  if (!fromRoom) {
+    walkerFloor = null;
+    showFloor(viewFloor ?? floorById[+params.get('floor')]?.id ?? floorById[22]?.id ?? FLOORS[0].id);
+    infoEl.innerHTML = 'First, pick the room you sit in.';
+    return;
+  }
+  const A = fromRoom.floor;
+  showFloor(A.id);
+  placeWalker(A, navOf(A).point(fromRoom.spotM) || new THREE.Vector3(fromRoom.spotM[0], 0, fromRoom.spotM[1]));
+  if (!toRoom) { infoEl.innerHTML = 'Now search for the room you need to get to.'; return; }
+  setHighlight(toRoom);
+  if (toRoom === fromRoom) { infoEl.innerHTML = `You're already in <b>${toRoom.name}</b> 🙂`; return; }
+  const plan = planTrip(fromRoom, toRoom);
+  if (!plan) { infoEl.innerHTML = 'Sorry, no walking route was found.'; return; }
+  const total = plan.legs.reduce((s, l) => s + l.len, 0);
+  let from = 0;
+  for (const leg of plan.legs) { leg.ribbon = drawRibbon(leg, from, total); from += leg.len; }
+  const last = plan.legs[plan.legs.length - 1], end = last.pts[last.pts.length - 1];
+  pin.position.set(end.x, 3.1, end.z);
+  pin.userData.ring.position.set(end.x, 0.04, end.z);
+  pin.visible = pin.userData.ring.visible = true;
+  last.floor.group.add(pin, pin.userData.ring);
+  frameRoute(plan.legs[0].pts);
+  trip = { plan, leg: 0, s: 0, state: 'walk', timer: 0 };
+  replayBtn.disabled = false;
+  const where = r => `<b>${r.name}</b> <span class="ftag">F${r.floor.id}</span>`;
+  const time = total / WALK_SPEED + (plan.carA ? ELEVATOR_SECONDS : 0);
+  infoEl.innerHTML = `${where(fromRoom)} → ${where(toRoom)}<br>${Math.round(total)} m` +
+    (plan.carA ? ` + elevator ${fromRoom.floor.id} → ${toRoom.floor.id}` : '') + ` · ${fmtTime(time)}`;
+}
+replayBtn.addEventListener('click', go);
+
+// Walk along a smoothed path; returns true at its end.
+function walkAlong(path, s, dt) {
+  const pts = path.pts, n = pts.length - 1, f = Math.min(n, s / path.len * n), i = Math.min(n - 1, Math.floor(f));
+  P.root.position.copy(pts[i]).lerp(pts[i + 1], f - i);
+  const ahead = pts[Math.min(n, i + 3)], behind = pts[Math.max(0, i - 1)];
+  turnTo(Math.atan2(ahead.x - behind.x, ahead.z - behind.z), dt);
+  phase += WALK_SPEED * PLAYBACK * dt / 1.5 * Math.PI * 2;
+  pose(phase, 1);
+  return s >= path.len;
+}
+const lerpAngle = (a, b, t) => a + (((b - a + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI) * t;
+const turnTo = (yaw, dt) => { P.root.rotation.y = lerpAngle(P.root.rotation.y, yaw, 1 - Math.exp(-12 * dt)); };
+
+// The trip: walk -> call the elevator -> board -> ride (switch floors) -> doors open -> walk -> arrive.
+function updateTrip(t, dt) {
+  const { plan } = trip, speed = WALK_SPEED * PLAYBACK;
+  switch (trip.state) {
+    case 'walk': {
+      const leg = plan.legs[trip.leg];
+      trip.s = Math.min(leg.len, trip.s + speed * dt);
+      leg.ribbon.material.uniforms.uWalked.value = trip.s;
+      if (trip.leg === 1 && trip.s > 2.5) plan.carB.target = 0;
+      if (!walkAlong(leg, trip.s, dt)) break;
+      pose(0, 0);
+      if (trip.leg === 0 && plan.carA) {
+        trip.state = 'call';
+        trip.timer = 1.0;
+        plan.carA.target = 1;
+      } else {
+        trip.state = 'arrived';
+        waveUntil = t + 2.4;
+        toast(`🎉 You've arrived at ${toRoom.name}`);
+      }
+      break;
+    }
+    case 'call':
+      turnTo(Math.atan2(plan.carA.door.x - P.root.position.x, plan.carA.door.z - P.root.position.z), dt);
+      if ((trip.timer -= dt) <= 0) {
+        trip.state = 'board';
+        trip.s = 0;
+        trip.board = smoothPath([P.root.position.clone(), plan.carA.door.clone(), plan.carA.inside.clone()]);
+      }
+      break;
+    case 'board':
+      trip.s += speed * 0.6 * dt;
+      if (walkAlong(trip.board, Math.min(trip.s, trip.board.len), dt)) {
+        pose(0, 0);
+        trip.state = 'close';
+        trip.timer = 1.0;
+        plan.carA.target = 0;
+      }
+      break;
+    case 'close':
+      turnTo(plan.carA.yawOut, dt);
+      if ((trip.timer -= dt) <= 0) {
+        trip.state = 'ride';
+        trip.timer = 2.6;
+        const a = plan.legs[0].floor.id, b = plan.legs[1].floor.id;
+        rideText.textContent = `Floor ${a} ${b < a ? '↓' : '↑'} Floor ${b}`;
+        rideEl.classList.add('show');
+      }
+      break;
+    case 'ride':
+      trip.timer -= dt;
+      if (!trip.switched && trip.timer < 1.7) {
+        trip.switched = true;
+        const Bf = plan.legs[1].floor;
+        showFloor(Bf.id);
+        placeWalker(Bf, plan.carB.inside, plan.carB.yawOut);
+        frameRoute(plan.legs[1].pts);
+      }
+      if (trip.timer <= 0) {
+        rideEl.classList.remove('show');
+        trip.state = 'open';
+        trip.timer = 0.9;
+        plan.carB.target = 1;
+      }
+      break;
+    case 'open':
+      if ((trip.timer -= dt) <= 0) { trip.state = 'walk'; trip.leg = 1; trip.s = 0; }
+      break;
+    case 'arrived':
+      pose(0, 0);
+      if (t < waveUntil) P.shR.rotation.z = -2.5 + Math.sin(t * 12) * 0.35;
+      break;
+  }
+}
+
+/* ==========================================================================
+   8. SEARCHABLE DROPDOWNS
+   ========================================================================== */
+const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/(^|\D)0+(?=\d)/g, '$1');
+const DOT = { meeting: '#ff2d75', team: '#a21cf0', other: '#c9b26a' };
+const label = r => `${r.name} · F${r.floor.id}`;
+function combo(id, rooms, onPick) {
+  const el = document.getElementById(id), input = el.querySelector('input'), ul = el.querySelector('ul');
+  let shown = [], active = 0;
+  const render = () => {
+    const q = input.value === input.dataset.value ? '' : norm(input.value);
+    shown = rooms.filter(r => norm(r.name).includes(q) || norm(`f${r.floor.id} floor${r.floor.id}`).includes(q));
+    active = Math.min(active, Math.max(0, shown.length - 1));
+    ul.innerHTML = '';
+    let group = null;
+    shown.forEach((r, i) => {
+      if (r.floor.id !== group) { group = r.floor.id; ul.insertAdjacentHTML('beforeend', `<li class="grp">Floor ${group}</li>`); }
+      const li = document.createElement('li');
+      li.dataset.i = i;
+      li.innerHTML = `<span class="dot" style="background:${DOT[r.type] || DOT.other}"></span>${r.name}<span class="ftag">F${r.floor.id}</span>`;
+      if (i === active) li.classList.add('active');
+      ul.append(li);
+    });
+    if (!shown.length) ul.innerHTML = '<li class="grp">No match</li>';
+    ul.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
+  };
+  const pick = r => { input.value = input.dataset.value = label(r); el.classList.remove('open'); input.blur(); onPick(r); };
+  input.addEventListener('focus', () => { active = 0; render(); el.classList.add('open'); input.select(); });
+  input.addEventListener('input', () => { active = 0; render(); el.classList.add('open'); });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { active = Math.max(0, Math.min(shown.length - 1, active + (e.key === 'ArrowDown' ? 1 : -1))); render(); e.preventDefault(); }
+    else if (e.key === 'Enter' && shown[active]) pick(shown[active]);
+    else if (e.key === 'Escape') input.blur();
+  });
+  input.addEventListener('blur', () => setTimeout(() => { el.classList.remove('open'); input.value = input.dataset.value || ''; }, 120));
+  ul.addEventListener('mousedown', e => { const li = e.target.closest('li[data-i]'); if (li) { e.preventDefault(); pick(shown[+li.dataset.i]); } });
+  return { set: r => { input.value = input.dataset.value = r ? label(r) : ''; } };
+}
+const order = { meeting: 0, other: 1, team: 2 };
+const byFloorThenType = (a, b) => b.floor.id - a.floor.id || order[a.type] - order[b.type] || a.name.localeCompare(b.name);
+const fromCombo = combo('from', ALL_ROOMS.filter(r => r.type === 'team').sort(byFloorThenType), r => {
+  fromRoom = r;
+  localStorage.setItem('icon.myRoom', keyOf(r));
+  go();
+});
+const toCombo = combo('to', [...ALL_ROOMS].sort(byFloorThenType), r => { toRoom = r; go(); });
+fromCombo.set(fromRoom);
+toCombo.set(toRoom);
+go();
+
+/* ==========================================================================
+   9. RENDER LOOP
+   ========================================================================== */
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h);
+  labelRenderer.setSize(w, h);
+  camera.aspect = w / h;
+  // Shift the picture right so the floor isn't hidden behind the side panel.
+  if (w > 900) camera.setViewOffset(w, h, -130, 0, w, h); else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  if (trip) updateTrip(t, dt);
+  else P.body.position.y = Math.sin(t * 2) * 0.008;
+  animateFloor(floorById[viewFloor], t, dt);
+  for (const leg of trip?.plan.legs || []) leg.ribbon.material.uniforms.uTime.value = t;
+
+  if (pin.visible) {
+    pin.position.y = 3.1 + Math.sin(t * 3) * 0.15;
+    pin.rotation.y = t * 1.5;
+    const k = (t * 0.8) % 1, ring = pin.userData.ring;
+    ring.scale.setScalar(1 + k * 2.2);
+    ring.material.opacity = 0.8 * (1 - k);
+  }
+  if (highlighted) {
+    const k = 0.18 + 0.14 * Math.sin(t * 4);
+    highlighted.floorMesh.material.emissive.setRGB(k, k * 0.2, k * 0.5);
+  }
+
+  if (camTween) {
+    camTween.t += dt;
+    const k = Math.min(1, camTween.t / camTween.dur), e = k * k * (3 - 2 * k);
+    controls.target.lerpVectors(camTween.fromT, camTween.toT, e);
+    camera.position.lerpVectors(camTween.fromP, camTween.toP, e);
+    if (k >= 1) camTween = null;
+  } else if (follow && trip?.state === 'walk' && walkerFloor === viewFloor) {
+    const goal = follow.clone().lerp(P.root.position, 0.25).sub(controls.target).multiplyScalar(1 - Math.exp(-1.5 * dt));
+    controls.target.add(goal);
+    camera.position.add(goal);
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
